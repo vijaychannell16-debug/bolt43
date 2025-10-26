@@ -374,6 +374,9 @@ function BookingPage() {
     existingBookings.push(booking);
     localStorage.setItem('mindcare_bookings', JSON.stringify(existingBookings));
 
+    // Dispatch custom event for same-tab updates
+    window.dispatchEvent(new Event('mindcare-data-updated'));
+
     // Track session booking and payment
     trackSessionStart(booking);
     trackPayment({
@@ -389,7 +392,7 @@ function BookingPage() {
     setSelectedDate('');
     setSelectedTime('');
     setBookingStep(1);
-    
+
     // Refresh appointments
     loadUserAppointments();
     setViewMode('appointments');

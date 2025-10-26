@@ -32,19 +32,19 @@ function PatientDashboard() {
     }
     
     // Load upcoming appointments
-    const savedAppointments = localStorage.getItem('mindcare_appointments');
+    const savedAppointments = localStorage.getItem('mindcare_bookings');
     if (savedAppointments) {
       const appointments = JSON.parse(savedAppointments);
-      const upcoming = appointments.filter((apt: any) => 
-        apt.patientId === user?.id && 
+      const upcoming = appointments.filter((apt: any) =>
+        apt.patientId === user?.id &&
         apt.status === 'confirmed' &&
         new Date(apt.date + ' ' + apt.time) > new Date()
       );
       setUpcomingAppointments(upcoming);
-      
+
       // Set next appointment
       if (upcoming.length > 0) {
-        const sortedUpcoming = upcoming.sort((a: any, b: any) => 
+        const sortedUpcoming = upcoming.sort((a: any, b: any) =>
           new Date(a.date + ' ' + a.time).getTime() - new Date(b.date + ' ' + b.time).getTime()
         );
         setNextAppointment(sortedUpcoming[0]);
@@ -359,8 +359,8 @@ function PatientDashboard() {
             <p className={`text-xs ${
               theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
             }`}>
-              {nextAppointment 
-                ? `${nextAppointment.date} at ${nextAppointment.time}`
+              {nextAppointment
+                ? `${nextAppointment.date} at ${nextAppointment.displayTime || nextAppointment.time}`
                 : 'Book your first session'
               }
             </p>
