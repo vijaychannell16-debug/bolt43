@@ -70,6 +70,10 @@ function BookingPage() {
   const [bookingStep, setBookingStep] = useState(1);
   const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([]);
   const [pendingBookingId, setPendingBookingId] = useState<string | null>(null);
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardCVV, setCardCVV] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardName, setCardName] = useState('');
 
   const defaultTherapists: Therapist[] = [
     {
@@ -340,6 +344,22 @@ function BookingPage() {
       return;
     }
 
+    // Validate card details
+    if (!cardNumber || !cardCVV || !cardExpiry || !cardName) {
+      toast.error('Please fill in all card details');
+      return;
+    }
+
+    if (cardNumber.replace(/\s/g, '').length !== 16) {
+      toast.error('Card number must be 16 digits');
+      return;
+    }
+
+    if (cardCVV.length !== 3) {
+      toast.error('CVV must be 3 digits');
+      return;
+    }
+
     // Convert 24-hour time back to 12-hour format for display
     const convertTo12Hour = (time24: string) => {
       const [hours, minutes] = time24.split(':');
@@ -392,6 +412,12 @@ function BookingPage() {
     setSelectedDate('');
     setSelectedTime('');
     setBookingStep(1);
+
+    // Reset card details
+    setCardNumber('');
+    setCardCVV('');
+    setCardExpiry('');
+    setCardName('');
 
     // Refresh appointments
     loadUserAppointments();
@@ -1127,8 +1153,114 @@ function BookingPage() {
                           Amount:
                         </span>
                         <span className="text-green-600">
-                          ${selectedTherapist.hourlyRate} - paid
+                          ${selectedTherapist.hourlyRate}
                         </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card Payment Form */}
+                  <div className="space-y-4 mb-4">
+                    <h4 className={`font-semibold ${
+                      theme === 'dark' ? 'text-white' : 'text-gray-800'
+                    }`}>
+                      Payment Details
+                    </h4>
+
+                    <div>
+                      <label className={`block text-sm font-medium mb-1 ${
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        Cardholder Name
+                      </label>
+                      <input
+                        type="text"
+                        value={cardName}
+                        onChange={(e) => setCardName(e.target.value)}
+                        placeholder="John Doe"
+                        className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all ${
+                          theme === 'dark'
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={`block text-sm font-medium mb-1 ${
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        Card Number
+                      </label>
+                      <input
+                        type="text"
+                        value={cardNumber}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\s/g, '');
+                          if (value.length <= 16 && /^\d*$/.test(value)) {
+                            const formatted = value.match(/.{1,4}/g)?.join(' ') || value;
+                            setCardNumber(formatted);
+                          }
+                        }}
+                        placeholder="1234 5678 9012 3456"
+                        maxLength={19}
+                        className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all ${
+                          theme === 'dark'
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={`block text-sm font-medium mb-1 ${
+                          theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                        }`}>
+                          Expiry Date
+                        </label>
+                        <input
+                          type="text"
+                          value={cardExpiry}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '');
+                            if (value.length <= 4) {
+                              const formatted = value.length >= 2 ? `${value.slice(0, 2)}/${value.slice(2)}` : value;
+                              setCardExpiry(formatted);
+                            }
+                          }}
+                          placeholder="MM/YY"
+                          maxLength={5}
+                          className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all ${
+                            theme === 'dark'
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <label className={`block text-sm font-medium mb-1 ${
+                          theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                        }`}>
+                          CVV
+                        </label>
+                        <input
+                          type="text"
+                          value={cardCVV}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '');
+                            if (value.length <= 3) {
+                              setCardCVV(value);
+                            }
+                          }}
+                          placeholder="123"
+                          maxLength={3}
+                          className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all ${
+                            theme === 'dark'
+                              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                          }`}
+                        />
                       </div>
                     </div>
                   </div>

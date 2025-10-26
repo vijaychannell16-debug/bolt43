@@ -117,11 +117,11 @@ function PatientDashboard() {
     // Load mood tracker entries
     const moodEntries = JSON.parse(localStorage.getItem('mindcare_mood_entries') || '[]');
     const userMoodEntries = moodEntries
-      .filter((entry: any) => entry.userId === user.id || !entry.userId) // Include entries without userId for demo
-      .slice(-2)
+      .filter((entry: any) => entry.userId === user.id || !entry.userId)
       .map((entry: any) => ({
         module: 'Mood Tracker',
         time: getRelativeTime(entry.date),
+        timestamp: new Date(entry.date).getTime(),
         duration: '5 min',
         type: 'mood'
       }));
@@ -131,10 +131,10 @@ function PatientDashboard() {
     const cbtRecords = JSON.parse(localStorage.getItem('mindcare_cbt_records') || '[]');
     const userCBTRecords = cbtRecords
       .filter((record: any) => record.userId === user.id || !record.userId)
-      .slice(-2)
       .map((record: any) => ({
         module: 'CBT Journaling',
         time: getRelativeTime(record.date),
+        timestamp: new Date(record.date).getTime(),
         duration: '20 min',
         type: 'cbt'
       }));
@@ -144,10 +144,10 @@ function PatientDashboard() {
     const gratitudeEntries = JSON.parse(localStorage.getItem('mindcare_gratitude_entries') || '[]');
     const userGratitudeEntries = gratitudeEntries
       .filter((entry: any) => entry.userId === user.id || !entry.userId)
-      .slice(-2)
       .map((entry: any) => ({
         module: 'Gratitude Practice',
         time: getRelativeTime(entry.date),
+        timestamp: new Date(entry.date).getTime(),
         duration: '10 min',
         type: 'gratitude'
       }));
@@ -157,46 +157,37 @@ function PatientDashboard() {
     const sleepLogs = JSON.parse(localStorage.getItem('mindcare_sleep_logs') || '[]');
     const userSleepLogs = sleepLogs
       .filter((log: any) => log.userId === user.id || !log.userId)
-      .slice(-1)
       .map((log: any) => ({
         module: 'Sleep Therapy',
         time: getRelativeTime(log.date),
+        timestamp: new Date(log.date).getTime(),
         duration: '30 min',
         type: 'sleep'
       }));
     activities.push(...userSleepLogs);
 
-    // Load completed sessions
+    // Load all bookings (confirmed and completed)
     const bookings = JSON.parse(localStorage.getItem('mindcare_bookings') || '[]');
     const userSessions = bookings
-      .filter((booking: any) => booking.patientId === user.id && booking.status === 'completed')
-      .slice(-2)
+      .filter((booking: any) => booking.patientId === user.id && (booking.status === 'completed' || booking.status === 'confirmed'))
       .map((booking: any) => ({
-        module: 'Video Therapy Session',
-        time: getRelativeTime(booking.date),
-        duration: '50 min',
+        module: booking.status === 'confirmed' ? 'Appointment Booked' : 'Video Therapy Session',
+        time: getRelativeTime(booking.createdAt || booking.date),
+        timestamp: new Date(booking.createdAt || booking.date).getTime(),
+        duration: '60 min',
         type: 'session'
       }));
     activities.push(...userSessions);
 
-    // Sort by most recent and limit to 4 items
+    // Sort by most recent timestamp and limit to 4 items
     const sortedActivities = activities
-      .sort((a, b) => {
-        // Convert relative time to sortable value (rough approximation)
-        const getTimeValue = (timeStr: string) => {
-          if (timeStr.includes('hour')) return parseInt(timeStr) * 60;
-          if (timeStr.includes('day')) return parseInt(timeStr) * 1440;
-          if (timeStr.includes('minute')) return parseInt(timeStr);
-          return 0;
-        };
-        return getTimeValue(a.time) - getTimeValue(b.time);
-      })
+      .sort((a, b) => b.timestamp - a.timestamp)
       .slice(0, 4);
 
     // If no real activities, show default message
     if (sortedActivities.length === 0) {
       setRecentActivities([
-        { module: 'Welcome to MindCare!', time: 'Just now', duration: '', type: 'welcome' }
+        { module: 'Welcome to MindCare!', time: 'Just now', duration: '', type: 'welcome', timestamp: Date.now() }
       ]);
     } else {
       setRecentActivities(sortedActivities);
@@ -204,15 +195,18 @@ function PatientDashboard() {
   };
 
   const getRelativeTime = (dateStr: string) => {
+    if (!dateStr) return 'Just now';
     const date = new Date(dateStr);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffHours / 24);
 
     if (diffDays > 0) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
     if (diffHours > 0) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    return 'Recently';
+    if (diffMinutes > 0) return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
+    return 'Just now';
   };
   const quickActions = [
     {
